@@ -1,6 +1,13 @@
 "use client";
 
-import { Bike, MapPin, Search, Star, Wrench } from "lucide-react";
+import Link from "next/link";
+import {
+  Bike,
+  MapPin,
+  Search,
+  Star,
+  Wrench,
+} from "lucide-react";
 
 export default function Home() {
   return (
@@ -36,15 +43,15 @@ export default function Home() {
           </p>
 
           <div className="hero-buttons">
-            <button className="primary-btn">
+            <Link href="/book" className="primary-btn">
               <Search size={20} />
               Diagnose My Bike
-            </button>
+            </Link>
 
-            <button className="secondary-btn">
+            <Link href="/book" className="secondary-btn">
               <MapPin size={20} />
               Find a Mechanic
-            </button>
+            </Link>
           </div>
 
           <div className="trust-info">
@@ -72,7 +79,9 @@ export default function Home() {
             mechanic.
           </p>
 
-          <button className="card-btn">Book a Diagnosis →</button>
+          <Link href="/book" className="card-btn">
+            Book a Diagnosis →
+          </Link>
         </div>
       </section>
     </main>
