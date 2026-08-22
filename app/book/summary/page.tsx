@@ -10,10 +10,16 @@ import {
   MapPin,
   Wrench,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function BookingSummaryPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const service = searchParams.get("service") || "";
   const brand = searchParams.get("brand") || "";
@@ -32,9 +38,36 @@ export default function BookingSummaryPage() {
         ? "Moderate"
         : "Urgent";
 
-  const handleConfirmBooking = () => {
-    alert(
-      "Booking confirmed successfully! Your request will be shared with available mechanics."
+  const handleConfirmBooking = async () => {
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    const bookingCode = `BOK-${Date.now().toString().slice(-8)}`;
+
+    const { error } = await supabase.from("bookings").insert({
+      booking_code: bookingCode,
+      service_type: service,
+      bike_brand: brand,
+      bike_model: model,
+      engine_cc: engineCC,
+      problem_description: description,
+      urgency: urgency,
+      status: "pending",
+    });
+
+    if (error) {
+      console.error("Booking creation error:", error);
+
+      setErrorMessage(
+        `Booking failed: ${error.message || JSON.stringify(error)}`
+      );
+
+      setIsSubmitting(false);
+      return;
+    }
+
+    router.push(
+      `/book/success?bookingId=${encodeURIComponent(bookingCode)}`
     );
   };
 
@@ -62,7 +95,6 @@ export default function BookingSummaryPage() {
         </div>
 
         <div className="summary-card">
-          {/* SERVICE DETAILS */}
           <div className="summary-section">
             <div className="summary-heading">
               {service === "doorstep" ? (
@@ -80,7 +112,6 @@ export default function BookingSummaryPage() {
             </div>
           </div>
 
-          {/* BIKE DETAILS */}
           <div className="summary-section">
             <div className="summary-heading">
               <Bike size={22} />
@@ -103,7 +134,6 @@ export default function BookingSummaryPage() {
             </div>
           </div>
 
-          {/* PROBLEM DETAILS */}
           <div className="summary-section">
             <div className="summary-heading">
               <ClipboardList size={22} />
@@ -121,7 +151,6 @@ export default function BookingSummaryPage() {
             </div>
           </div>
 
-          {/* BOOKING STATUS */}
           <div className="summary-info">
             <Wrench size={22} />
 
@@ -130,20 +159,33 @@ export default function BookingSummaryPage() {
 
               <p>
                 Your booking will be shared with suitable mechanics. Once a
-                mechanic accepts your request, you will receive the appointment
+                mechanic accepts your request, you will receive appointment
                 details.
               </p>
             </div>
           </div>
         </div>
 
+        {errorMessage && (
+          <div className="booking-error">
+            {errorMessage}
+          </div>
+        )}
+
         <button
           type="button"
           className="confirm-booking-btn"
           onClick={handleConfirmBooking}
+          disabled={isSubmitting}
         >
-          <CheckCircle2 size={20} />
-          Confirm Booking
+          {isSubmitting ? (
+            "Submitting Booking..."
+          ) : (
+            <>
+              <CheckCircle2 size={20} />
+              Confirm Booking
+            </>
+          )}
         </button>
       </section>
     </main>
