@@ -14,6 +14,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+type CustomerLocation = {
+  latitude: number;
+  longitude: number;
+  radius?: number;
+};
+
 export default function BookingSummaryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,7 +35,9 @@ export default function BookingSummaryPage() {
   const urgency = searchParams.get("urgency") || "";
 
   const serviceName =
-    service === "doorstep" ? "Doorstep Service" : "Visit a Mechanic";
+    service === "doorstep"
+      ? "Doorstep Service"
+      : "Visit a Mechanic";
 
   const urgencyName =
     urgency === "low"
@@ -38,13 +46,66 @@ export default function BookingSummaryPage() {
         ? "Moderate"
         : "Urgent";
 
+  const getCustomerLocation = (): CustomerLocation | null => {
+    const savedLocation = sessionStorage.getItem(
+      "bike_ok_customer_location"
+    );
+
+    if (!savedLocation) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(savedLocation);
+
+      if (
+        typeof parsed.latitude !== "number" ||
+        typeof parsed.longitude !== "number"
+      ) {
+        return null;
+      }
+
+      return {
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+        radius: parsed.radius,
+      };
+    } catch {
+      return null;
+    }
+  };
+
   const handleConfirmBooking = async () => {
     setIsSubmitting(true);
     setErrorMessage("");
 
-    const bookingCode = `BOK-${Date.now().toString().slice(-8)}`;
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setErrorMessage("Please log in before creating a booking.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const customerLocation = getCustomerLocation();
+
+    if (!customerLocation) {
+      setErrorMessage(
+        "Your location information is missing. Please go back to Step 1 and detect your location again."
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    const bookingCode = `BOK-${Date.now()
+      .toString()
+      .slice(-8)}`;
 
     const { error } = await supabase.from("bookings").insert({
+      customer_id: user.id,
       booking_code: bookingCode,
       service_type: service,
       bike_brand: brand,
@@ -53,6 +114,8 @@ export default function BookingSummaryPage() {
       problem_description: description,
       urgency: urgency,
       status: "pending",
+      customer_latitude: customerLocation.latitude,
+      customer_longitude: customerLocation.longitude,
     });
 
     if (error) {
@@ -67,14 +130,19 @@ export default function BookingSummaryPage() {
     }
 
     router.push(
-      `/book/success?bookingId=${encodeURIComponent(bookingCode)}`
+      `/book/success?bookingId=${encodeURIComponent(
+        bookingCode
+      )}`
     );
   };
 
   return (
     <main className="booking-page">
       <header className="booking-header">
-        <Link href="/book/problem-details" className="back-link">
+        <Link
+          href="/book/problem-details"
+          className="back-link"
+        >
           <ArrowLeft size={20} />
           Back
         </Link>
@@ -89,8 +157,8 @@ export default function BookingSummaryPage() {
           <h1>Review your booking</h1>
 
           <p>
-            Please check your information before submitting your diagnosis
-            request.
+            Please check your information before submitting your
+            diagnosis request.
           </p>
         </div>
 
@@ -158,9 +226,9 @@ export default function BookingSummaryPage() {
               <h3>What happens next?</h3>
 
               <p>
-                Your booking will be shared with suitable mechanics. Once a
-                mechanic accepts your request, you will receive appointment
-                details.
+                Your booking will be shared with eligible nearby
+                mechanics. The first mechanic to confirm the request
+                gets the assignment.
               </p>
             </div>
           </div>

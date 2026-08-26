@@ -21,17 +21,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      if (error || !data.user) {
+      if (!user) {
         router.push("/auth/login");
         return;
       }
 
-      const fullName = data.user.user_metadata?.full_name;
+      const fullName = user.user_metadata?.full_name;
 
       setUserName(fullName || "Customer");
-      setEmail(data.user.email || "");
+      setEmail(user.email || "");
       setIsLoading(false);
     };
 
@@ -76,8 +78,8 @@ export default function DashboardPage() {
           <h1>Welcome, {userName}</h1>
 
           <p>
-            Manage your bikes, diagnosis requests, and service bookings from
-            one place.
+            Manage your bikes, diagnosis requests, and service bookings
+            from one place.
           </p>
 
           <span className="dashboard-email">{email}</span>
@@ -95,7 +97,10 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          <Link href="/dashboard/bookings" className="dashboard-action-card">
+          <Link
+            href="/dashboard/bookings"
+            className="dashboard-action-card"
+          >
             <div className="dashboard-action-icon">
               <CalendarDays size={28} />
             </div>
@@ -106,7 +111,10 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          <Link href="/dashboard/bikes" className="dashboard-action-card">
+          <Link
+            href="/dashboard/bikes"
+            className="dashboard-action-card"
+          >
             <div className="dashboard-action-icon">
               <Bike size={28} />
             </div>
@@ -117,16 +125,21 @@ export default function DashboardPage() {
             </div>
           </Link>
 
-          <div className="dashboard-action-card disabled-card">
+          <Link
+            href="/dashboard/service-history"
+            className="dashboard-action-card"
+          >
             <div className="dashboard-action-icon">
               <Wrench size={28} />
             </div>
 
             <div>
               <h2>Service History</h2>
-              <p>Service records will appear here.</p>
+              <p>
+                View completed diagnosis and service records.
+              </p>
             </div>
-          </div>
+          </Link>
         </div>
       </section>
     </main>

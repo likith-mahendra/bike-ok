@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2, ClipboardList, Home, Wrench } from "lucide-react";
+import {
+  CheckCircle2,
+  ClipboardList,
+  Home,
+  Wrench,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 export default function BookingSuccessPage() {
@@ -11,9 +16,9 @@ export default function BookingSuccessPage() {
   return (
     <main className="booking-page">
       <header className="booking-header">
-        <Link href="/" className="back-link">
+        <Link href="/dashboard" className="back-link">
           <Home size={20} />
-          Back to Home
+          Dashboard
         </Link>
 
         <div className="booking-logo">BIKE OK</div>
@@ -43,38 +48,51 @@ export default function BookingSuccessPage() {
 
           <div className="next-step">
             <ClipboardList size={22} />
+
             <div>
               <strong>1. Request shared</strong>
-              <span>Suitable mechanics receive your diagnosis request.</span>
+
+              <span>
+                Suitable mechanics receive your diagnosis request.
+              </span>
             </div>
           </div>
 
           <div className="next-step">
             <Wrench size={22} />
+
             <div>
-              <strong>2. Mechanic responds</strong>
-              <span>A mechanic accepts your booking and provides availability.</span>
+              <strong>2. Mechanic confirms</strong>
+
+              <span>
+                The first eligible mechanic to confirm the request gets the
+                booking.
+              </span>
             </div>
           </div>
 
           <div className="next-step">
             <CheckCircle2 size={22} />
+
             <div>
-              <strong>3. Appointment confirmed</strong>
-              <span>You receive the diagnosis appointment details.</span>
+              <strong>3. Appointment scheduled</strong>
+
+              <span>
+                You will receive the mechanic and appointment details.
+              </span>
             </div>
           </div>
         </div>
 
         <div className="success-actions">
-          <Link href="/" className="primary-btn">
+          <Link href="/dashboard" className="primary-btn">
             <Home size={20} />
-            Back to Home
+            Go to Dashboard
           </Link>
 
-          <Link href="/book" className="secondary-btn">
+          <Link href="/dashboard/bookings" className="secondary-btn">
             <ClipboardList size={20} />
-            Create Another Booking
+            View My Bookings
           </Link>
         </div>
       </section>

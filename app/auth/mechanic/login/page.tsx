@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Bike, LogIn } from "lucide-react";
+import { ArrowLeft, Bike, LogIn, Wrench } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export default function LoginPage() {
+export default function MechanicLoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -40,55 +40,59 @@ export default function LoginPage() {
 
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, verification_status")
       .eq("id", data.user.id)
       .single();
 
-    if (profileError || !profile) {
+    if (profileError) {
       await supabase.auth.signOut();
 
       setErrorMessage(
-        "Your user profile could not be loaded. Please contact Bike OK support."
+        "Your mechanic profile could not be loaded. Please contact Bike OK support."
       );
 
       setIsLoading(false);
       return;
     }
 
-    if (profile.role === "admin") {
-      router.push("/admin/dashboard");
-      return;
-    }
-
-    if (profile.role === "mechanic") {
+    if (profile.role !== "mechanic") {
       await supabase.auth.signOut();
 
       setErrorMessage(
-        "Please use the Mechanic Login page for mechanic accounts."
+        "This account is not registered as a mechanic account."
       );
 
       setIsLoading(false);
       return;
     }
 
-    if (profile.role === "customer") {
-      const redirect = new URLSearchParams(window.location.search).get(
-        "redirect"
-      );
+    if (profile.verification_status === "pending") {
+      router.push("/auth/mechanic/pending");
+      return;
+    }
 
-      router.push(redirect || "/dashboard");
+    if (profile.verification_status === "rejected") {
+      router.push("/auth/mechanic/rejected");
+      return;
+    }
+
+    if (profile.verification_status === "approved") {
+      router.push("/mechanic/dashboard");
       return;
     }
 
     await supabase.auth.signOut();
 
-    setErrorMessage("Your account role is invalid.");
+    setErrorMessage(
+      "Your mechanic account has an invalid verification status."
+    );
+
     setIsLoading(false);
   };
 
   return (
     <main className="auth-page">
-      <div className="auth-card">
+      <div className="auth-card mechanic-auth-card">
         <Link href="/" className="back-link">
           <ArrowLeft size={18} />
           Back to Home
@@ -99,10 +103,16 @@ export default function LoginPage() {
           <span>Bike OK</span>
         </div>
 
+        <div className="mechanic-badge">
+          <Wrench size={16} />
+          Mechanic Login
+        </div>
+
         <h1>Welcome back</h1>
 
         <p className="auth-description">
-          Login to access your Bike OK account.
+          Sign in to manage your mechanic profile and receive nearby booking
+          requests.
         </p>
 
         <form onSubmit={handleLogin} className="auth-form">
@@ -148,21 +158,16 @@ export default function LoginPage() {
             ) : (
               <>
                 <LogIn size={20} />
-                Login
+                Mechanic Login
               </>
             )}
           </button>
         </form>
 
         <p className="auth-switch">
-          Don't have a customer account?{" "}
-          <Link href="/auth/signup">Create one</Link>
-        </p>
-
-        <p className="auth-switch">
-          Are you a mechanic?{" "}
-          <Link href="/auth/mechanic/login">
-            Mechanic Login
+          Don't have a mechanic account?{" "}
+          <Link href="/auth/mechanic/signup">
+            Register as a Mechanic
           </Link>
         </p>
       </div>
